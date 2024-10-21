@@ -70,6 +70,16 @@ app.post('/users', async (req, res) => {
     }
 });
 
+app.get('/users', async (req, res) => {
+    try {
+        const users = await Users.find(); // Fetch all users from the database
+        res.status(200).json(users); // Send back the users with a 200 status
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error fetching user data from the database");
+    }
+});
+
 app.listen(port,()=>{
     console.log('example of listening')
 })
