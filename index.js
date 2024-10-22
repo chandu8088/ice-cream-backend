@@ -34,6 +34,26 @@ const dataSchema = new Schema({
         }],
     },
 });
+const getModel = (name) => {
+    if (mongoose.models[name]) {
+        return mongoose.models[name];
+    } else {
+        const dataSchema = new Schema({
+            name: String,
+            date: String,
+            value: {
+                total: Number,
+                iceCreamCount: [{
+                    id: String,
+                    name: String,
+                    price: Number,
+                    count: Number,
+                }],
+            },
+        });
+        return mongoose.model(name, dataSchema,name);
+    }
+};
 const userSchema = new Schema({
     name:String,
     mobile:String,
@@ -43,10 +63,17 @@ const Data = mongoose.model('Data', dataSchema);
 
 app.post('/',async(req,res)=>{
     try {
-        const { name,date, value } = req.body; // Destructure name and email from the request body
-        console.log("inside post")
-        const newData = new Data({ name,date, value }); // Create a new document
+        const { name, date, value } = req.body; // Destructure name and value from the request body
+        console.log("Inside POST");
+        console.log(name)
+        const UserModel = getModel(name)
+
+        // Check if the model for the user already exists
+
+        // Create a new document for the user
+        const newData = new UserModel({ name, date, value });
         const savedData = await newData.save(); // Save the document to MongoDB
+        console.log(savedData)
         res.status(201).json(savedData); // Send back the saved data with a 201 status
     } catch (error) {
         console.error(error);
@@ -69,7 +96,26 @@ app.post('/users', async (req, res) => {
         res.status(500).send("Error saving user data to the database");
     }
 });
+app.get('/userdata', async (req, res) => {
+    try {
+        const { name } = req.query; 
+        console.log(req.query)// Get the name from the query parameters
+        console.log(name)
+        if (!name) {
+            return res.status(400).send("Name parameter is required");
+        }
 
+        // Get the user model
+        const UserModel = getModel(name);
+
+        // Fetch all data for the specified user
+        const userData = await UserModel.find(); // Fetch all documents for the user model
+        res.status(200).json(userData); // Send back the user data with a 200 status
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error fetching user data from the database");
+    }
+});
 app.get('/users', async (req, res) => {
     try {
         const users = await Users.find(); // Fetch all users from the database
